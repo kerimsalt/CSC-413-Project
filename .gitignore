@@ -1,0 +1,5 @@
+# Ignore the numpy_matrix_data folder
+numpy_matrix_data/
+
+# Ignore the visual_data folder
+visual_data/
