@@ -25,6 +25,31 @@ class CNN(nn.Module):
         return x
 
 
+def convert_raw_output_to_label(raw_output):
+    labels = {0: -1, 1: 0, 2: 1}
+    predicted_label = torch.argmax(raw_output)  # the raw output is in tensor form
+    return labels[predicted_label.item()]
+
+
+def split_to_batches(training_set, batch_size):
+    """
+    split the training set into batches of batch_size
+    """
+    np.random.shuffle(training_set)  # Shuffle the array randomly
+    batches = []
+    num_batches = len(training_set) // batch_size
+
+    for i in range(num_batches):
+        batch = training_set[i * batch_size: (i + 1) * batch_size]  # Extract a batch of size k
+        batches.append(batch)
+
+    # If there are remaining elements, create a last batch with fewer elements
+    if len(training_set) % batch_size != 0:
+        last_batch = training_set[num_batches * batch_size:]
+        batches.append(last_batch)
+    return batches
+
+
 # Create an instance of the CNN
 model = CNN()
 
