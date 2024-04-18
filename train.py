@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import data_setup
 import time
-
+import mnist_model
 from torch.utils.data import DataLoader
 import os
 
@@ -30,10 +30,10 @@ def get_accuracy(model, data, device="cpu"):
 def train_model(model,
                 train_data,
                 validation_data,
-                learning_rate=0.01,
+                learning_rate=0.1,
                 batch_size=10,
                 num_epochs=10,
-                plot_every=50,
+                plot_every=10,
                 plot=True,
                 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")):
     train_loader = torch.utils.data.DataLoader(train_data,
@@ -41,12 +41,17 @@ def train_model(model,
     model = model.to(device)
 
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
     iters, train_loss, train_acc, val_acc = [], [], [], []
     iter_count = 0
     try:
         for e in range(num_epochs):
+            print(1)
+            # for param in model.parameters():
+            #         # print(param.data.shape)
+            #         # print(param.data[0][0])
+            #         break
             for imgs, labels in iter(train_loader):
                 start = time.time()
                 labels = labels.to(device)
@@ -103,18 +108,9 @@ if torch.cuda.is_available():
 
 print(torch.cuda.is_available())
 
-model = Model.CNN(in1=4, out1=32, out2=64, out3=32, fcb1=32)
-train_model(model, train_data, validation_data, batch_size=10, num_epochs=2)
+# model = Model.CNN(in1=4, out1=64, out2=128, out3=256, out4=512, fcb1=25088, fcb2=2048, fcb3=100, fcb4=1)
+model = Model.CNN(in1=4, out1=64, out2=64, out3=32, fcb1=32)
 
-# # Get the input
-# file_path = os.path.join('numpy_matrix_data', 'ordered_data.npy')
-# input_data = np.load(file_path, allow_pickle=True)
+mnist_model.train_model1(model, train_data, validation_data, batch_size=100, num_epochs=10)
 
-# total_size = len(input_data)
-# split1_size = int(total_size * 0.6)
-# split2_size = int(total_size * 0.2)
-# train_data = input_data[:split1_size]
-# test_data = input_data[split1_size:split1_size + split2_size]
-# validation_data = input_data[split1_size + split2_size:]
 
-# Model.train_model(model, train_data, validation_data, batch_size=100, num_epochs=2)

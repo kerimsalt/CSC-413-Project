@@ -32,6 +32,7 @@ for i in range(0, len(tickerDf) - 20, 1):
     slices.append(slice_)
 
 
+
 # Got rid of the first 99 slices because all of them had NaN values for their 100 day moving average
 slices = slices[99:]
 

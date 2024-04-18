@@ -39,6 +39,8 @@ split2_size = int(total_size * 0.2)
 raw_images = np.array([item[0] for item in loaded_array], dtype=np.float32)
 raw_labels = np.array([item[1] for item in loaded_array], dtype=np.int64)   # labels as integers
 
+# print(raw_images[1])
+
 # replace all instnaces of -1 in the original list with 0
 raw_labels[raw_labels==-1] = 0
 
@@ -86,7 +88,7 @@ test_dataloader = DataLoader(test_data, batch_size=10)
 # print(len(test_dataloader))
 
 # for x, t in train_data:
+#     # print(t)
 #     print(t)
-#     print(t.shape)
-#     print(x.shape)
+#     print(x)
 #     break
