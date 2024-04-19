@@ -37,19 +37,19 @@ split2_size = int(total_size * 0.2)
 
 # seperating raw data into images and labels
 raw_images = np.array([item[0] for item in loaded_array], dtype=np.float32)
+# raw_images = raw_images[:,:,:]
 raw_labels = np.array([item[1] for item in loaded_array], dtype=np.int64)   # labels as integers
-
-# print(raw_images[1])
 
 # replace all instnaces of -1 in the original list with 0
 raw_labels[raw_labels==-1] = 0
 
-print(np.count_nonzero(raw_labels==1))
-print(np.count_nonzero(raw_labels==0))
-print(len(raw_labels))
+# print(np.count_nonzero(raw_labels==1))
+# print(np.count_nonzero(raw_labels==0))
+# print(len(raw_labels))
 
 # converting them to torch tensors
 images = torch.from_numpy(raw_images).transpose(3,1)
+images = images[:, 0:3, :, :]
 # print(images.shape)
 labels = torch.from_numpy(raw_labels)
 
@@ -68,6 +68,12 @@ val_labels = labels[split1_size + split2_size:]
 # print(train_images.shape)
 # print(test_images.shape)
 # print(val_images.shape)
+#
+#
+# print(np.count_nonzero(train_labels==1))
+# print(np.count_nonzero(train_labels==0))
+# print(np.count_nonzero(val_labels==1))
+# print(np.count_nonzero(val_labels==0))
 
 # print(train_labels.shape)
 # print(test_labels.shape)
@@ -88,7 +94,7 @@ test_dataloader = DataLoader(test_data, batch_size=10)
 # print(len(test_dataloader))
 
 # for x, t in train_data:
-#     # print(t)
 #     print(t)
-#     print(x)
+#     print(t.shape)
+#     print(x.shape)
 #     break

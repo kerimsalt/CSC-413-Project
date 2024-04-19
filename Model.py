@@ -9,37 +9,37 @@ from torchvision import models, transforms
 import data_setup
 
 
-alexnet = models.alexnet(pretrained=True)
-def compute_features(data):
-    fets = []
-    for img, t in data:
-        features = alexnet.features(img.unsqueeze(0)).detach().squeeze()  # TODO
-        fets.append((features, t),)
-    return fets
+# # alexnet = models.alexnet(pretrained=True)
+# # def compute_features(data):
+# #     fets = []
+# #     for img, t in data:
+# #         features = alexnet.features(img.unsqueeze(0)).detach().squeeze()  # TODO
+# #         fets.append((features, t),)
+# #     return fets
 
-train_data_s = data_setup.train_data
-validation_data_s = data_setup.val_data
-test_data_s = data_setup.test_data
+# # train_data_s = data_setup.train_data
+# # validation_data_s = data_setup.val_data
+# # test_data_s = data_setup.test_data
 
-train_data_fets = compute_features(train_data_s)
-valid_data_fets = compute_features(validation_data_s)
-test_data_fets = compute_features(test_data_s)
+# # train_data_fets = compute_features(train_data_s)
+# # valid_data_fets = compute_features(validation_data_s)
+# # test_data_fets = compute_features(test_data_s)
 
-img, label = train_data_s[0]
-features = alexnet.features(img.unsqueeze(0)).detach()
+# # img, label = train_data_s[0]
+# # features = alexnet.features(img.unsqueeze(0)).detach()
 
-print(features.shape)
+# # print(features.shape)
 
-class LinearModel(nn.Module):
-    def __init__(self):
-        super(LinearModel, self).__init__()
-        self.fc1 = nn.Linear(256*6*6, 1)
-        # TODO: What layer need to be initialized?
+# class LinearModel(nn.Module):
+#     def __init__(self):
+#         super(LinearModel, self).__init__()
+#         self.fc1 = nn.Linear(256*6*6, 1)
+#         # TODO: What layer need to be initialized?
 
-    def forward(self, x):
-        x = x.view(-1, 256 * 6 * 6) # flatten the input
-        z = self.fc1(x) # TODO: What computation needs to be performed?
-        return z
+#     def forward(self, x):
+#         x = x.view(-1, 256 * 6 * 6) # flatten the input
+#         z = self.fc1(x) # TODO: What computation needs to be performed?
+#         return z
 
 
 

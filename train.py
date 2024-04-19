@@ -11,90 +11,110 @@ from torch.utils.data import DataLoader
 import os
 
 
-def get_accuracy(model, data, device="cpu"):
-    loader = torch.utils.data.DataLoader(data, batch_size=10)
-    model.to(device)
-    model.eval()  # annotate model for evaluation (important for batch normalization)
-    correct = 0
-    total = 0
-    for imgs, labels in loader:
-        labels = labels.to(device)
-        logits = model(imgs.to(device))
-        prob_output = torch.sigmoid(logits)
-        pred = (prob_output >= 0.5).int()
-        correct += int(torch.sum(labels == pred))
-        total += labels.shape[0]
+def accuracy(model, dataset, device):
+    """
+    Compute the accuracy of `model` over the `dataset`.
+    We will take the **most probable class**
+    as the class predicted by the model.
+
+    Parameters:
+        `model` - A PyTorch MLPModel
+        `dataset` - A data structure that acts like a list of 2-tuples of
+                  the form (x, t), where `x` is a PyTorch tensor of shape
+                  [1, 28, 28] representing an MedMNIST image,
+                  and `t` is the corresponding binary target label
+
+    Returns: a floating-point value between 0 and 1.
+    """
+
+    correct, total = 0, 0
+    loader = torch.utils.data.DataLoader(dataset, batch_size=100)
+    for img, t in loader:
+        # X = img.reshape(-1, 784)
+        img = img.to(device)
+        t = t.to(device)
+        z = model(img)
+        y = torch.sigmoid(z)
+        pred = (y >= 0.5).int()
+                    # pred should be a [N, 1] tensor with binary
+                    # predictions, (0 or 1 in each entry)
+
+        correct += int(torch.sum(t == pred))
+        total   += t.shape[0]
     return correct / total
 
+criterion = nn.BCEWithLogitsLoss()
 
-def train_model(model,
-                train_data,
-                validation_data,
-                learning_rate=0.1,
-                batch_size=10,
-                num_epochs=10,
-                plot_every=10,
+def train_model(model,                # an instance of MLPModel
+                train_data,           # training data
+                val_data,             # validation data
+                learning_rate=0.005,
+                batch_size=100,
+                num_epochs=4,
+                plot_every=2,        # how often (in # iterations) to track metrics
                 plot=True,
-                device=torch.device("cuda" if torch.cuda.is_available() else "cpu")):
+                device=torch.device("cuda" if torch.cuda.is_available() else "cpu")):           # whether to plot the training curve
     train_loader = torch.utils.data.DataLoader(train_data,
-                                               batch_size=batch_size, )
+                                               batch_size=batch_size,
+                                               shuffle=True) # reshuffle minibatches every epoch
+    criterion = nn.BCEWithLogitsLoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     model = model.to(device)
 
-    criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-
+    # these lists will be used to track the training progress
+    # and to plot the training curve
     iters, train_loss, train_acc, val_acc = [], [], [], []
-    iter_count = 0
+    iter_count = 0 # count the number of iterations that has passed
+
     try:
         for e in range(num_epochs):
-            print(1)
-            # for param in model.parameters():
-            #         # print(param.data.shape)
-            #         # print(param.data[0][0])
-            #         break
-            for imgs, labels in iter(train_loader):
+            # print(1)
+            for i, (images, labels) in enumerate(train_loader):
                 start = time.time()
+                images = images.to(device)
                 labels = labels.to(device)
-                imgs = imgs.to(device)
-                # print(imgs.shape)
-                model.train()
 
-                out = model(imgs).float()
-                # print(out)
-                # print(out.shape)
+                z = model(images).float() # TODO
+                # print(z.shape)
                 # print(labels.shape)
                 # break
-                loss = criterion(out, labels.float())
-                loss.backward()
-                optimizer.step()
-                optimizer.zero_grad()
+                loss = criterion(z, labels.float()) # TODO
+
+                loss.backward() # propagate the gradients
+                optimizer.step() # update the parameters
+                optimizer.zero_grad() # clean up accumualted gradients
+
 
                 iter_count += 1
                 if iter_count % plot_every == 0:
                     iters.append(iter_count)
-                    t_acc = get_accuracy(model, train_data, device)
-                    v_acc = get_accuracy(model, validation_data, device)
+                    ta = accuracy(model, train_data, device)
+                    va = accuracy(model, val_data, device)
                     train_loss.append(float(loss))
-                    train_acc.append(t_acc)
-                    val_acc.append(v_acc)
+                    train_acc.append(ta)
+                    val_acc.append(va)
                     end = time.time()
                     time_taken = round(end - start, 3)
-                    print(iter_count, "Loss:", float(loss), "Train Acc:", round(t_acc, 3), "Val Acc:", round(v_acc, 3),
-                          'Time taken:', time_taken)
+                    print(iter_count, "Loss:", float(loss), "Train Acc:", ta, "Val Acc:", va, 'Time taken:', time_taken)
     finally:
-        plt.figure()
-        plt.scatter(iters, train_loss, color='red', s=15)
-        plt.xlabel('Iteration')
-        plt.ylabel('Training Loss')
-        plt.show()
+        # This try/finally block is to display the training curve
+        # even if training is interrupted
+        if plot:
+            plt.figure()
+            plt.plot(iters[:len(train_loss)], train_loss)
+            plt.title("Loss over iterations")
+            plt.xlabel("Iterations")
+            plt.ylabel("Loss")
+            plt.savefig('training_loss.png')
 
-        plt.figure()
-        plt.plot(iters, train_acc, color='green', label='Training accuracy')
-        plt.plot(iters, val_acc, color='blue', label='Validation accuracy')
-        plt.xlabel('Iteration')
-        plt.ylabel('Accuracy')
-        plt.show()
-
+            plt.figure()
+            plt.plot(iters[:len(train_acc)], train_acc)
+            plt.plot(iters[:len(val_acc)], val_acc)
+            plt.title("Accuracy over iterations")
+            plt.xlabel("Iterations")
+            plt.ylabel("Accuracy")
+            plt.legend(["Train", "Validation"])
+            plt.savefig('accuracy.png')
 
 train_data = data_setup.train_data
 validation_data = data_setup.val_data
@@ -108,9 +128,11 @@ if torch.cuda.is_available():
 
 print(torch.cuda.is_available())
 
-# model = Model.CNN(in1=4, out1=64, out2=128, out3=256, out4=512, fcb1=25088, fcb2=2048, fcb3=100, fcb4=1)
-model = Model.CNN(in1=4, out1=64, out2=64, out3=32, fcb1=32)
+model = Model.CNN(in1=3, out1=64, out2=128, out3=256, out4=512, fcb1=25088, fcb2=2048, fcb3=100, fcb4=1)
+# model = Model.CNN(in1=4, out1=64, out2=64, out3=32, fcb1=32)
 
-mnist_model.train_model1(model, train_data, validation_data, batch_size=100, num_epochs=10)
+train_model(model, train_data, validation_data, batch_size=100, num_epochs=10)
 
+test_accuracy = accuracy(model, test_data, device=torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+print(test_accuracy)
 
