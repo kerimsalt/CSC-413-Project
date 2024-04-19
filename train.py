@@ -36,8 +36,6 @@ def accuracy(model, dataset, device):
         z = model(img)
         y = torch.sigmoid(z)
         pred = (y >= 0.5).int()
-                    # pred should be a [N, 1] tensor with binary
-                    # predictions, (0 or 1 in each entry)
 
         correct += int(torch.sum(t == pred))
         total   += t.shape[0]
@@ -68,17 +66,13 @@ def train_model(model,                # an instance of MLPModel
 
     try:
         for e in range(num_epochs):
-            # print(1)
             for i, (images, labels) in enumerate(train_loader):
                 start = time.time()
                 images = images.to(device)
                 labels = labels.to(device)
 
-                z = model(images).float() # TODO
-                # print(z.shape)
-                # print(labels.shape)
-                # break
-                loss = criterion(z, labels.float()) # TODO
+                z = model(images).float()
+                loss = criterion(z, labels.float())
 
                 loss.backward() # propagate the gradients
                 optimizer.step() # update the parameters
@@ -97,8 +91,6 @@ def train_model(model,                # an instance of MLPModel
                     time_taken = round(end - start, 3)
                     print(iter_count, "Loss:", float(loss), "Train Acc:", ta, "Val Acc:", va, 'Time taken:', time_taken)
     finally:
-        # This try/finally block is to display the training curve
-        # even if training is interrupted
         if plot:
             plt.figure()
             plt.plot(iters[:len(train_loss)], train_loss)
@@ -119,18 +111,13 @@ def train_model(model,                # an instance of MLPModel
 train_data = data_setup.train_data
 validation_data = data_setup.val_data
 test_data = data_setup.test_data
-# for x, t in train_data:
-#     print(x, t)
-#     print(t.shape)
-#     break
+
 if torch.cuda.is_available():
     device = torch.device("cuda")
 
 print(torch.cuda.is_available())
 
 model = Model.CNN(in1=3, out1=64, out2=128, out3=256, out4=512, fcb1=25088, fcb2=2048, fcb3=100, fcb4=1)
-# model = Model.CNN(in1=4, out1=64, out2=64, out3=32, fcb1=32)
-
 train_model(model, train_data, validation_data, batch_size=100, num_epochs=10)
 
 test_accuracy = accuracy(model, test_data, device=torch.device("cuda" if torch.cuda.is_available() else "cpu"))
